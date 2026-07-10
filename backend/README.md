@@ -1,6 +1,6 @@
-# Fashion Hub — Backend
+# Fashion Idea — Backend
 
-FastAPI + SQLModel service for the Fashion Hub multi-tenant SaaS platform.
+FastAPI + SQLModel service for the Fashion Idea multi-tenant SaaS platform.
 
 ## Phase 1 (current)
 

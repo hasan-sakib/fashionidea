@@ -1,4 +1,4 @@
-# Fashion Hub — API Design
+# Fashion Idea — API Design
 
 > **Status:** Phase 1 defines conventions. Only `GET /api/v1/utils/health-check/` exists so far;
 > the rest are the contract that later phases implement.

@@ -44,7 +44,7 @@ export default function App() {
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--card)] p-8 shadow-sm">
         <p className="text-xs font-medium uppercase tracking-widest text-[var(--muted-foreground)]">
-          Fashion Hub
+          Fashion Idea
         </p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">
           Multi-tenant SaaS skeleton

@@ -1,0 +1,32 @@
+# Traefik dynamic configuration (file provider).
+# Services are reached by their compose service name over the shared network.
+#
+#   api.localhost  OR  any host with /api prefix  -> backend  (priority 100)
+#   localhost and *.localhost storefront subdomains -> frontend SPA (priority 1)
+
+http:
+  routers:
+    backend:
+      rule: 'Host(`api.localhost`) || PathPrefix(`/api`)'
+      entryPoints:
+        - web
+      priority: 100
+      service: backend
+
+    frontend:
+      rule: 'HostRegexp(`^([a-z0-9-]+\.)*localhost$`)'
+      entryPoints:
+        - web
+      priority: 1
+      service: frontend
+
+  services:
+    backend:
+      loadBalancer:
+        servers:
+          - url: 'http://backend:8000'
+
+    frontend:
+      loadBalancer:
+        servers:
+          - url: 'http://frontend:5173'

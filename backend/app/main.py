@@ -1,4 +1,4 @@
-"""FastAPI application factory for Fashion Hub.
+"""FastAPI application factory for Fashion Idea.
 
 Kept deliberately thin: build the app, attach cross-cutting middleware (CORS), and mount the
 versioned API router. Feature wiring lives in ``app.api.main``; configuration in ``app.core.config``.

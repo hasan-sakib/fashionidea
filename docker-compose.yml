@@ -1,4 +1,4 @@
-# Fashion Hub — local orchestration.
+# Fashion Idea — local orchestration.
 # Bring up:  cp docker/.env.example .env && docker compose up --build
 #
 # Routing (Traefik, :80):
@@ -23,7 +23,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - fashionhub
+      - fashionidea
 
   backend:
     build:
@@ -35,21 +35,16 @@ services:
     environment:
       POSTGRES_SERVER: db
     volumes:
-      # Hot reload: mount source, but keep the image's virtualenv.
+      # Hot reload: mount source only. The virtualenv lives at /opt/venv (outside
+      # /app), so no anonymous-volume shadowing is needed.
       - ./backend:/app
-      - /app/.venv
     depends_on:
       db:
         condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      # api.localhost OR any host with a /api path prefix -> backend.
-      - "traefik.http.routers.backend.rule=Host(`api.localhost`) || PathPrefix(`/api`)"
-      - "traefik.http.routers.backend.entrypoints=web"
-      - "traefik.http.routers.backend.priority=100"
-      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+    # Routing is defined in docker/traefik/dynamic.yml (file provider), which
+    # reaches this service by name (http://backend:8000) over the shared network.
     networks:
-      - fashionhub
+      - fashionidea
 
   frontend:
     build:
@@ -59,41 +54,36 @@ services:
     env_file:
       - .env
     volumes:
-      # Hot reload: mount source, but keep the image's node_modules.
+      # Hot reload: mount source only. node_modules lives at /node_modules (parent
+      # of /app, set in the Dockerfile), so this bind-mount can't shadow it and no
+      # node_modules volume is needed.
       - ./frontend:/app
-      - /app/node_modules
     depends_on:
       - backend
-    labels:
-      - "traefik.enable=true"
-      # localhost and every *.localhost storefront subdomain -> SPA (lower priority
-      # than backend so /api still reaches the API on tenant subdomains).
-      - "traefik.http.routers.frontend.rule=HostRegexp(`^([a-z0-9-]+\\.)*localhost$`)"
-      - "traefik.http.routers.frontend.entrypoints=web"
-      - "traefik.http.routers.frontend.priority=1"
-      - "traefik.http.services.frontend.loadbalancer.server.port=5173"
+    # Routing is defined in docker/traefik/dynamic.yml (file provider), which
+    # reaches this service by name (http://frontend:5173) over the shared network.
     networks:
-      - fashionhub
+      - fashionidea
 
   traefik:
     image: traefik:v3.3
     restart: unless-stopped
     command:
-      # All static config lives in traefik.yml; api.insecure there exposes the
-      # dashboard on Traefik's built-in :8080 entrypoint.
+      # Static config in traefik.yml; api.insecure exposes the dashboard on :8080.
+      # Routing comes from the file provider (dynamic.yml) — no Docker socket needed.
       - "--configFile=/etc/traefik/traefik.yml"
     ports:
       - "80:80"
       - "8080:8080"
     volumes:
       - ./docker/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./docker/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
     networks:
-      - fashionhub
+      - fashionidea
 
 volumes:
   db-data:
 
 networks:
-  fashionhub:
+  fashionidea:
     driver: bridge

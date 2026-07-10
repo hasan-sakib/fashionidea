@@ -6,10 +6,11 @@ and session dependency arrive in Phase 2.
 """
 
 from functools import lru_cache
+from typing import Annotated
 
 from pydantic import PostgresDsn, computed_field, field_validator
 from pydantic_core import MultiHostUrl
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -20,7 +21,7 @@ class Settings(BaseSettings):
     )
 
     # --- General -----------------------------------------------------------------
-    PROJECT_NAME: str = "Fashion Hub"
+    PROJECT_NAME: str = "Fashion Idea"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "local"
 
@@ -32,8 +33,9 @@ class Settings(BaseSettings):
     DOMAIN: str = "localhost"
 
     # --- CORS --------------------------------------------------------------------
-    # Comma-separated list in env, or a JSON array. Parsed into a list of origins.
-    BACKEND_CORS_ORIGINS: list[str] = []
+    # Comma-separated list in env, or a JSON array. NoDecode stops pydantic-settings
+    # from JSON-decoding the raw env string so the validator below can split it.
+    BACKEND_CORS_ORIGINS: Annotated[list[str], NoDecode] = []
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
@@ -47,7 +49,7 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_DB: str = "fashionhub"
+    POSTGRES_DB: str = "fashionidea"
 
     @computed_field  # type: ignore[prop-decorator]
     @property

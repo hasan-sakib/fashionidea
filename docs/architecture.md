@@ -1,4 +1,4 @@
-# Fashion Hub — Architecture
+# Fashion Idea — Architecture
 
 > **Status:** Phase 1 (skeleton). The database schema below is the *target* logical model. Actual
 > SQLModel models and Alembic migrations are implemented in **Phase 2** — this document is the
@@ -6,9 +6,9 @@
 
 ## 1. Overview
 
-Fashion Hub is a **multi-tenant SaaS platform** for fashion designers. Each designer ("tenant")
+Fashion Idea is a **multi-tenant SaaS platform** for fashion designers. Each designer ("tenant")
 gets an isolated storefront reachable at their own subdomain (`designer1.localhost` in dev,
-`designer1.fashionhub.app` in prod). A separate global marketplace aggregates published looks
+`designer1.fashionidea.app` in prod). A separate global marketplace aggregates published looks
 across all tenants for consumer ("normal user") browsing.
 
 ### Component map

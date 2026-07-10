@@ -1,0 +1,21 @@
+# Traefik static configuration (local development).
+# Dynamic routing is provided by container labels via the Docker provider.
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  docker:
+    # Only containers explicitly labelled traefik.enable=true are exposed.
+    exposedByDefault: false
+
+api:
+  # Dashboard on the :8080 entrypoint (see command flags in docker-compose).
+  dashboard: true
+  insecure: true
+
+log:
+  level: INFO
+
+accessLog: {}

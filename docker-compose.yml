@@ -1,0 +1,99 @@
+# Fashion Hub — local orchestration.
+# Bring up:  cp docker/.env.example .env && docker compose up --build
+#
+# Routing (Traefik, :80):
+#   api.localhost         -> backend
+#   <anything>/api/...    -> backend   (so designer1.localhost/api/... works)
+#   localhost, *.localhost-> frontend SPA
+#   traefik dashboard     -> :8080
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - fashionhub
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_SERVER: db
+    volumes:
+      # Hot reload: mount source, but keep the image's virtualenv.
+      - ./backend:/app
+      - /app/.venv
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      # api.localhost OR any host with a /api path prefix -> backend.
+      - "traefik.http.routers.backend.rule=Host(`api.localhost`) || PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.routers.backend.priority=100"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+    networks:
+      - fashionhub
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Hot reload: mount source, but keep the image's node_modules.
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    labels:
+      - "traefik.enable=true"
+      # localhost and every *.localhost storefront subdomain -> SPA (lower priority
+      # than backend so /api still reaches the API on tenant subdomains).
+      - "traefik.http.routers.frontend.rule=HostRegexp(`^([a-z0-9-]+\\.)*localhost$`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.priority=1"
+      - "traefik.http.services.frontend.loadbalancer.server.port=5173"
+    networks:
+      - fashionhub
+
+  traefik:
+    image: traefik:v3.3
+    restart: unless-stopped
+    command:
+      # All static config lives in traefik.yml; api.insecure there exposes the
+      # dashboard on Traefik's built-in :8080 entrypoint.
+      - "--configFile=/etc/traefik/traefik.yml"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - ./docker/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - fashionhub
+
+volumes:
+  db-data:
+
+networks:
+  fashionhub:
+    driver: bridge

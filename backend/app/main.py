@@ -4,8 +4,11 @@ Kept deliberately thin: build the app, attach cross-cutting middleware (CORS), a
 versioned API router. Feature wiring lives in ``app.api.main``; configuration in ``app.core.config``.
 """
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.main import api_router
 from app.core.config import settings
@@ -31,6 +34,16 @@ def create_app() -> FastAPI:
         )
 
     app.include_router(api_router, prefix=settings.API_V1_STR)
+
+    # Serve uploaded look images read-only. Mounted under the API prefix so the
+    # existing Traefik /api rule routes /media to the backend on every host.
+    upload_dir = Path(settings.UPLOAD_DIR)
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    app.mount(
+        f"{settings.API_V1_STR}/media",
+        StaticFiles(directory=upload_dir),
+        name="media",
+    )
 
     @app.get("/", tags=["root"])
     def root() -> dict[str, str]:

@@ -124,3 +124,23 @@ def require_roles(*roles: UserRole):
 
 # Designer-or-admin guard for the dashboard routes added in Phase 3.
 CurrentDesigner = Annotated[User, Depends(require_roles(UserRole.designer, UserRole.admin))]
+
+
+def get_designer_tenant(session: SessionDep, current_user: CurrentDesigner) -> Tenant:
+    """Tenant of the authenticated designer, derived from the JWT identity.
+
+    Dashboard writes scope to *this* tenant — never a subdomain/header the client
+    could spoof — so a designer can only ever touch their own data.
+    """
+    if current_user.tenant_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="not_a_tenant_member"
+        )
+    tenant = session.get(Tenant, current_user.tenant_id)
+    if tenant is None or not tenant.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="tenant_inactive")
+    return tenant
+
+
+# Tenant for authenticated designer dashboard routes.
+DesignerTenant = Annotated[Tenant, Depends(get_designer_tenant)]

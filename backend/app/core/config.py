@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     # Apex domain for tenant subdomains, e.g. "localhost" → designer1.localhost
     DOMAIN: str = "localhost"
 
+    # --- Uploads -----------------------------------------------------------------
+    # Directory for uploaded look images (served read-only at {API_V1_STR}/media).
+    UPLOAD_DIR: str = "uploads"
+    MAX_UPLOAD_MB: int = 5
+
     # --- CORS --------------------------------------------------------------------
     # Comma-separated list in env, or a JSON array. NoDecode stops pydantic-settings
     # from JSON-decoding the raw env string so the validator below can split it.

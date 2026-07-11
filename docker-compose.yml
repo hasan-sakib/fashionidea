@@ -34,10 +34,14 @@ services:
       - .env
     environment:
       POSTGRES_SERVER: db
+      # Uploaded images live outside /app (own volume) so the source bind-mount
+      # can't shadow them and they persist across rebuilds.
+      UPLOAD_DIR: /uploads
     volumes:
       # Hot reload: mount source only. The virtualenv lives at /opt/venv (outside
       # /app), so no anonymous-volume shadowing is needed.
       - ./backend:/app
+      - backend-uploads:/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -83,6 +87,7 @@ services:
 
 volumes:
   db-data:
+  backend-uploads:
 
 networks:
   fashionidea:

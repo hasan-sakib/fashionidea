@@ -43,7 +43,10 @@ export function InquiryForm({ lookId, lookTitle, onSent }: Props) {
 
   if (sent) {
     return (
-      <div className="rounded-lg border border-[var(--border)] bg-[var(--muted)] p-6 text-center">
+      <div
+        data-testid="inquiry-success"
+        className="rounded-lg border border-[var(--border)] bg-[var(--muted)] p-6 text-center"
+      >
         <p className="font-medium">Thank you — your message was sent.</p>
         <p className="mt-1 text-sm text-[var(--muted-foreground)]">The designer will be in touch soon.</p>
       </div>
@@ -55,19 +58,19 @@ export function InquiryForm({ lookId, lookTitle, onSent }: Props) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label>Your name</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} required />
+          <Input data-testid="inquiry-name" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         <div className="space-y-1.5">
           <Label>Email</Label>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Input data-testid="inquiry-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </div>
       </div>
       <div className="space-y-1.5">
         <Label>Message</Label>
-        <Textarea value={message} onChange={(e) => setMessage(e.target.value)} required rows={4} />
+        <Textarea data-testid="inquiry-message" value={message} onChange={(e) => setMessage(e.target.value)} required rows={4} />
       </div>
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      <Button type="submit" disabled={busy}>{busy ? "Sending…" : "Send inquiry"}</Button>
+      <Button type="submit" data-testid="inquiry-submit" disabled={busy}>{busy ? "Sending…" : "Send inquiry"}</Button>
     </form>
   )
 }

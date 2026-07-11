@@ -10,6 +10,7 @@ from app.models.collection import Collection
 from app.models.enums import InquiryStatus, UserRole
 from app.models.inquiry import Inquiry
 from app.models.look import Look
+from app.models.moodboard import Moodboard, MoodboardItem
 from app.models.tenant import Tenant
 from app.models.user import User
 
@@ -21,6 +22,8 @@ __all__ = [
     "Inquiry",
     "InquiryStatus",
     "Look",
+    "Moodboard",
+    "MoodboardItem",
     "Tenant",
     "User",
     "UserRole",

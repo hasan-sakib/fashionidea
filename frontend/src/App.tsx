@@ -1,33 +1,33 @@
 import { AuthProvider, useAuth } from "@/lib/auth"
 import { getSubdomainSlug } from "@/lib/tenant"
 import { AuthPage } from "@/pages/AuthPage"
+import { ConsumerApp } from "@/pages/ConsumerApp"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { Storefront } from "@/pages/Storefront"
 
-function AppGate() {
-  const { user, loading } = useAuth()
+function Loading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <p className="text-sm text-[var(--muted-foreground)]">Loading…</p>
+    </div>
+  )
+}
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-[var(--muted-foreground)]">Loading…</p>
-      </div>
-    )
-  }
-  // Only designers/admins use the dashboard; consumers land on the auth screen
-  // (consumer-facing features arrive in Phase 5).
+/** Designer area (apex /studio): auth → dashboard. */
+function StudioGate() {
+  const { user, loading } = useAuth()
+  if (loading) return <Loading />
   return user && user.role !== "consumer" ? <DashboardPage /> : <AuthPage />
 }
 
 export default function App() {
-  // A tenant subdomain (e.g. alice.localhost) renders that designer's public
-  // storefront; the apex (localhost) is the designer app (auth + dashboard).
+  // 1) Tenant subdomain (alice.localhost) → that designer's public storefront.
   if (getSubdomainSlug()) {
     return <Storefront />
   }
+  // 2) Apex /studio → designer app; everything else → consumer marketplace.
+  const isStudio = window.location.pathname.startsWith("/studio")
   return (
-    <AuthProvider>
-      <AppGate />
-    </AuthProvider>
+    <AuthProvider>{isStudio ? <StudioGate /> : <ConsumerApp />}</AuthProvider>
   )
 }

@@ -6,7 +6,16 @@ the single place the app wires up route modules, keeping ``app.main`` free of pe
 
 from fastapi import APIRouter
 
-from app.api.routes import auth, collections, inquiries, looks, storefront, utils
+from app.api.routes import (
+    auth,
+    collections,
+    inquiries,
+    looks,
+    marketplace,
+    moodboards,
+    storefront,
+    utils,
+)
 
 api_router = APIRouter()
 api_router.include_router(utils.router)
@@ -15,3 +24,5 @@ api_router.include_router(collections.router)
 api_router.include_router(looks.router)
 api_router.include_router(inquiries.router)
 api_router.include_router(storefront.router)
+api_router.include_router(marketplace.router)
+api_router.include_router(moodboards.router)

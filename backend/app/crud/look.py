@@ -24,6 +24,12 @@ def get(session: Session, tenant: Tenant, look_id: uuid.UUID) -> Look | None:
     return session.exec(stmt).first()
 
 
+def get_public(session: Session, look_id: uuid.UUID) -> Look | None:
+    """Fetch a published look regardless of tenant (marketplace / moodboards)."""
+    stmt = select(Look).where(Look.id == look_id, Look.is_published == True)  # noqa: E712
+    return session.exec(stmt).first()
+
+
 def list_(
     session: Session,
     tenant: Tenant,

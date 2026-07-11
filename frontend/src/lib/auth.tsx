@@ -19,11 +19,19 @@ interface DesignerRegisterInput {
   tenant_slug: string
 }
 
+interface ConsumerRegisterInput {
+  email: string
+  password: string
+  full_name?: string
+}
+
 interface AuthContextValue {
   user: User | null
   loading: boolean
   login: (email: string, password: string, tenantSlug?: string) => Promise<void>
   registerDesigner: (input: DesignerRegisterInput) => Promise<void>
+  registerConsumer: (input: ConsumerRegisterInput) => Promise<void>
+  refresh: () => Promise<void>
   logout: () => void
 }
 
@@ -70,14 +78,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [loadMe],
   )
 
+  const registerConsumer = useCallback(
+    async (input: ConsumerRegisterInput) => {
+      const { access_token } = await api.post<{ access_token: string }>(
+        "/auth/register/consumer",
+        input,
+      )
+      setToken(access_token)
+      await loadMe()
+    },
+    [loadMe],
+  )
+
   const logout = useCallback(() => {
     setToken(null)
     setUser(null)
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, login, registerDesigner, logout }),
-    [user, loading, login, registerDesigner, logout],
+    () => ({ user, loading, login, registerDesigner, registerConsumer, refresh: loadMe, logout }),
+    [user, loading, login, registerDesigner, registerConsumer, loadMe, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

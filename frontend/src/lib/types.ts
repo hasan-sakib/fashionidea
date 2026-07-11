@@ -48,3 +48,34 @@ export interface Page<T> {
   data: T[]
   count: number
 }
+
+export interface DesignerRef {
+  slug: string
+  name: string
+}
+
+export interface MarketplaceLook {
+  id: string
+  title: string
+  description: string | null
+  image_url: string
+  price: string | null
+  created_at: string
+  designer: DesignerRef
+}
+
+export interface Moodboard {
+  id: string
+  name: string
+  item_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface MoodboardDetail {
+  id: string
+  name: string
+  created_at: string
+  updated_at: string
+  looks: MarketplaceLook[]
+}

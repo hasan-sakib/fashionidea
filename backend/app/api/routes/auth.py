@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.deps import CurrentUser, SessionDep, resolve_tenant
-from app.core.security import create_access_token
+from app.core.security import create_access_token, hash_password
 from app.crud import tenant as tenant_crud
 from app.crud import user as user_crud
 from app.models.enums import UserRole
@@ -14,6 +14,7 @@ from app.schemas.auth import (
     RESERVED_SLUGS,
     ConsumerRegister,
     DesignerRegister,
+    ProfileUpdate,
     Token,
     UserPublic,
 )
@@ -100,4 +101,17 @@ def login(
 
 @router.get("/me", response_model=UserPublic)
 def read_me(current_user: CurrentUser) -> UserPublic:
+    return current_user  # type: ignore[return-value]
+
+
+@router.patch("/me", response_model=UserPublic)
+def update_me(body: ProfileUpdate, current_user: CurrentUser, session: SessionDep) -> UserPublic:
+    """Update the authenticated user's profile (name and/or password)."""
+    if body.full_name is not None:
+        current_user.full_name = body.full_name
+    if body.password is not None:
+        current_user.hashed_password = hash_password(body.password)
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
     return current_user  # type: ignore[return-value]

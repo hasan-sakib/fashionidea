@@ -1,9 +1,9 @@
-import { AuthProvider, useAuth } from "@/lib/auth"
-import { getSubdomainSlug } from "@/lib/tenant"
-import { AuthPage } from "@/pages/AuthPage"
-import { ConsumerApp } from "@/pages/ConsumerApp"
-import { DashboardPage } from "@/pages/DashboardPage"
-import { Storefront } from "@/pages/Storefront"
+import { AuthProvider, useAuth } from "@/shared/lib/auth"
+import { getSubdomainSlug } from "@/shared/lib/tenant"
+import { AuthPage } from "@/dashboard/AuthPage"
+import { ConsumerApp } from "@/public-site/ConsumerApp"
+import { DashboardPage } from "@/dashboard/DashboardPage"
+import { Storefront } from "@/designer-site/Storefront"
 
 function Loading() {
   return (

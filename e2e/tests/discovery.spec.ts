@@ -49,7 +49,10 @@ test("occasion filter narrows the feed to that occasion", async ({ page }) => {
 
 test("Designers directory lists the new designer", async ({ page }) => {
   await page.goto("http://localhost/designers")
-  await expect(page.getByText("Disco Studio")).toBeVisible()
+  // Filter by the unique slug (not the shared "Disco Studio" name) so this is
+  // resilient to other runs' designers accumulating in a persistent dev database.
+  await page.getByPlaceholder("Search designers…").fill(SLUG)
+  await expect(page.getByText(`${SLUG}.localhost`)).toBeVisible()
 })
 
 test("search finds the designer by name", async ({ page }) => {

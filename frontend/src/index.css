@@ -78,3 +78,16 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+/* --- LookCard hover glow: rotating gradient behind the image on hover ---
+   The centering translate is baked into every keyframe step (not a separate
+   static transform utility) because a running CSS animation fully replaces
+   the `transform` property it drives — a sibling `translate-x/y` class would
+   otherwise be wiped out the instant the rotation starts. */
+@keyframes fi-card-glow-spin {
+  0%   { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fi-card-glow { animation: none !important; }
+}

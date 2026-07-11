@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { LookCard } from "@/public-site/components/LookCard"
+import { OccasionTile } from "@/public-site/components/OccasionTile"
 import { api } from "@/shared/lib/api"
-import { navigate } from "@/public-site/lib/router"
 import type { DiscoverLook, Page } from "@/shared/lib/types"
 import { CATEGORIES, OCCASIONS } from "@/shared/lib/vocab"
 
@@ -46,16 +46,9 @@ export function DiscoverFeed({ onSave, lockedOccasion }: Props) {
           <p className="mt-2 max-w-prose text-[var(--muted-foreground)]">
             Get outfit ideas by occasion, explore designers' talent, and save looks you love.
           </p>
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="mt-5 grid auto-rows-22 grid-cols-4 gap-3 sm:grid-cols-8">
             {heroOccasions.map((o) => (
-              <button
-                key={o.name}
-                onClick={() => navigate(`/occasions/${encodeURIComponent(o.name)}`)}
-                className={`flex flex-col items-center gap-1 rounded-xl bg-gradient-to-br ${o.gradient} p-3 text-center text-white shadow-sm transition-transform hover:scale-[1.03]`}
-              >
-                <span className="text-2xl">{o.emoji}</span>
-                <span className="text-xs font-medium">{o.name}</span>
-              </button>
+              <OccasionTile key={o.name} occasion={o} size="compact" />
             ))}
           </div>
         </section>

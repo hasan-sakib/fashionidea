@@ -252,13 +252,13 @@ export function LooksPanel() {
                   type="button"
                   onClick={() => toggleOccasion(o.name)}
                   className={
-                    "rounded-full border px-3 py-1 text-xs font-medium " +
+                    "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium " +
                     (form.occasions.includes(o.name)
                       ? "border-transparent bg-[var(--primary)] text-[var(--primary-foreground)]"
                       : "border-[var(--border)] text-[var(--muted-foreground)]")
                   }
                 >
-                  {o.emoji} {o.name}
+                  <o.icon className="h-3.5 w-3.5" /> {o.name}
                 </button>
               ))}
             </div>

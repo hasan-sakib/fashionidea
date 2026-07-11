@@ -1,8 +1,10 @@
+import { AnimatePresence, motion } from "framer-motion"
 import { Heart, Home, LogOut, Menu, MessageCircle, Ruler, Search, Sparkles, User, X } from "lucide-react"
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 import { SearchBox } from "@/public-site/components/SearchBox"
 import { Button } from "@/shared/components/ui/button"
+import { ThemeToggle } from "@/shared/components/ui/theme-toggle"
 import { useAuth } from "@/shared/lib/auth"
 import { navigate, useLocation } from "@/public-site/lib/router"
 import { cn } from "@/shared/lib/utils"
@@ -32,25 +34,11 @@ export function Navbar({ onSignIn }: { onSignIn: () => void }) {
           <Sparkles className="h-5 w-5 text-[var(--primary)]" />
           <span className="text-lg font-semibold tracking-tight">Fashion Idea</span>
         </button>
-        <nav className="hidden items-center gap-1 lg:flex">
-          {NAV_LINKS.map((l) => (
-            <button
-              key={l.path}
-              onClick={() => navigate(l.path)}
-              className={cn(
-                "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                isActive(l.path)
-                  ? "text-[var(--foreground)]"
-                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
-              )}
-            >
-              {l.label}
-            </button>
-          ))}
-        </nav>
+        <TracingNav links={NAV_LINKS} isActive={isActive} onNavigate={navigate} />
 
-        {/* Center: search (desktop) */}
-        <div className="mx-2 hidden max-w-md flex-1 md:block">
+        {/* Separated search, its own visually distinct section within the row */}
+        <div className="hidden h-6 w-px shrink-0 bg-[var(--border)] md:block" />
+        <div className="hidden max-w-md flex-1 md:block">
           <SearchBox />
         </div>
 
@@ -59,6 +47,7 @@ export function Navbar({ onSignIn }: { onSignIn: () => void }) {
           <IconButton label="Search" onClick={() => setMobileSearch((v) => !v)} className="md:hidden">
             <Search className="h-5 w-5" />
           </IconButton>
+          <ThemeToggle />
           <IconButton label="Moodboards" onClick={() => guarded("/moodboards")} className="hidden sm:inline-flex">
             <Heart className="h-5 w-5" />
           </IconButton>
@@ -96,10 +85,6 @@ export function Navbar({ onSignIn }: { onSignIn: () => void }) {
             <Button size="sm" variant="ghost" onClick={onSignIn} className="hidden sm:inline-flex">Sign in</Button>
           )}
 
-          <a href="/studio" className="hidden md:inline-flex">
-            <Button size="sm" variant="outline" className="border-[var(--primary)]/40">For Designers</Button>
-          </a>
-
           <IconButton label="Menu" onClick={() => setMenuOpen((v) => !v)} className="lg:hidden">
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </IconButton>
@@ -124,7 +109,6 @@ export function Navbar({ onSignIn }: { onSignIn: () => void }) {
           {!user && (
             <button onClick={() => { setMenuOpen(false); onSignIn() }} className="block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-[var(--accent)]">Sign in</button>
           )}
-          <a href="/studio" className="block rounded-md px-3 py-2 text-left text-sm font-medium text-[var(--primary)] hover:bg-[var(--accent)]">For Designers →</a>
         </div>
       )}
 
@@ -146,6 +130,80 @@ function BottomNav({ onSignIn, onSearch }: { onSignIn: () => void; onSearch: () 
       <button className={item(false)} disabled><MessageCircle className="h-5 w-5" /> Messages</button>
       <button className={item(pathname.startsWith("/profile"))} onClick={() => (user ? navigate("/profile") : onSignIn())}><User className="h-5 w-5" /> Profile</button>
     </nav>
+  )
+}
+
+interface NavLink {
+  label: string
+  path: string
+}
+
+interface Rect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/**
+ * Desktop nav links with an outline that glides to trace whichever item is
+ * hovered. Measures real DOM rects (via getBoundingClientRect) rather than
+ * hardcoded geometry, so it works correctly for variable-width labels and a
+ * fully responsive container.
+ */
+function TracingNav({
+  links,
+  isActive,
+  onNavigate,
+}: {
+  links: NavLink[]
+  isActive: (path: string) => boolean
+  onNavigate: (path: string) => void
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [hoverRect, setHoverRect] = useState<Rect | null>(null)
+
+  function trackHover(e: React.MouseEvent<HTMLButtonElement>) {
+    const container = containerRef.current
+    if (!container) return
+    const btn = e.currentTarget.getBoundingClientRect()
+    const box = container.getBoundingClientRect()
+    setHoverRect({ x: btn.left - box.left, y: btn.top - box.top, width: btn.width, height: btn.height })
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative hidden items-center gap-1 lg:flex"
+      onMouseLeave={() => setHoverRect(null)}
+    >
+      {links.map((l) => (
+        <button
+          key={l.path}
+          onClick={() => onNavigate(l.path)}
+          onMouseEnter={trackHover}
+          className={cn(
+            "relative z-10 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            isActive(l.path)
+              ? "text-[var(--foreground)]"
+              : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
+          )}
+        >
+          {l.label}
+        </button>
+      ))}
+      <AnimatePresence>
+        {hoverRect && (
+          <motion.span
+            className="pointer-events-none absolute rounded-md border border-[var(--foreground)]/25 bg-[var(--accent)]"
+            initial={{ opacity: 0, ...hoverRect }}
+            animate={{ opacity: 1, ...hoverRect }}
+            exit={{ opacity: 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+          />
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 

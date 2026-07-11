@@ -1,65 +1,53 @@
+import { Menu } from "lucide-react"
 import { useState } from "react"
 
-import { Button } from "@/shared/components/ui/button"
+import { Sidebar, type DashboardTab } from "@/dashboard/components/Sidebar"
 import { CollectionsPanel } from "@/dashboard/features/collections/CollectionsPanel"
 import { InquiriesPanel } from "@/dashboard/features/inquiries/InquiriesPanel"
 import { LooksPanel } from "@/dashboard/features/looks/LooksPanel"
-import { useAuth } from "@/shared/lib/auth"
-import { cn } from "@/shared/lib/utils"
+import { ProfilePanel } from "@/dashboard/features/profile/ProfilePanel"
 
-type Tab = "collections" | "looks" | "inquiries"
-
-const TABS: { key: Tab; label: string }[] = [
-  { key: "collections", label: "Collections" },
-  { key: "looks", label: "Designs" },
-  { key: "inquiries", label: "Messages" },
-]
+const TITLES: Record<DashboardTab, string> = {
+  looks: "Designs",
+  collections: "Collections",
+  inquiries: "Messages",
+  profile: "Profile",
+}
 
 export function DashboardPage() {
-  const { user, logout } = useAuth()
-  const [tab, setTab] = useState<Tab>("looks")
+  const [tab, setTab] = useState<DashboardTab>("looks")
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  function selectTab(next: DashboardTab) {
+    setTab(next)
+    setMobileOpen(false)
+  }
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-[var(--border)] bg-[var(--card)]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
-              Fashion Idea
-            </span>
-            <span className="text-[var(--muted-foreground)]">/</span>
-            <span className="text-sm font-medium">Designer dashboard</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-[var(--muted-foreground)] sm:inline">
-              {user?.full_name || user?.email}
-            </span>
-            <Button variant="outline" size="sm" onClick={logout}>Sign out</Button>
-          </div>
-        </div>
-        <nav className="mx-auto flex max-w-6xl gap-1 px-4">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={cn(
-                "border-b-2 px-3 py-2 text-sm font-medium transition-colors",
-                tab === t.key
-                  ? "border-[var(--primary)] text-[var(--foreground)]"
-                  : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
-      </header>
+    <div className="flex h-screen overflow-hidden bg-[var(--background)]">
+      <Sidebar tab={tab} onTabChange={selectTab} mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
 
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        {tab === "collections" && <CollectionsPanel />}
-        {tab === "looks" && <LooksPanel />}
-        {tab === "inquiries" && <InquiriesPanel />}
-      </main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center gap-3 border-b border-[var(--border)] px-4 py-3 md:hidden">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="rounded-md p-1.5 text-[var(--foreground)] hover:bg-[var(--accent)]"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="text-sm font-semibold">{TITLES[tab]}</span>
+        </header>
+
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-6xl px-6 py-8 md:px-10 md:py-10">
+            {tab === "collections" && <CollectionsPanel />}
+            {tab === "looks" && <LooksPanel />}
+            {tab === "inquiries" && <InquiriesPanel />}
+            {tab === "profile" && <ProfilePanel />}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }

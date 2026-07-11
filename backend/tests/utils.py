@@ -56,6 +56,9 @@ def create_look(
     collection_id: str | None = None,
     published=True,
     image_url="http://img/x.png",
+    category: str | None = None,
+    occasions: list[str] | None = None,
+    tags: list[str] | None = None,
 ) -> str:
     r = client.post(
         f"{V1}/looks/",
@@ -65,6 +68,9 @@ def create_look(
             "image_url": image_url,
             "collection_id": collection_id,
             "is_published": published,
+            "category": category,
+            "occasions": occasions or [],
+            "tags": tags or [],
         },
     )
     assert r.status_code == 201, r.text

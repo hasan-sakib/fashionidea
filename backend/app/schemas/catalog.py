@@ -1,8 +1,7 @@
-"""Request/response DTOs for Collections and Looks."""
+"""Request/response DTOs for Collections and Looks (designs)."""
 
 import uuid
 from datetime import datetime
-from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
@@ -35,14 +34,16 @@ class CollectionPublic(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# --- Looks -------------------------------------------------------------------
+# --- Looks (designs) ---------------------------------------------------------
 
 
 class LookCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: str | None = None
     image_url: str = Field(min_length=1, max_length=1024)
-    price: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
+    category: str | None = Field(default=None, max_length=100)
+    occasions: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
     collection_id: uuid.UUID | None = None
     is_published: bool = False
 
@@ -51,7 +52,9 @@ class LookUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = None
     image_url: str | None = Field(default=None, min_length=1, max_length=1024)
-    price: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
+    category: str | None = Field(default=None, max_length=100)
+    occasions: list[str] | None = None
+    tags: list[str] | None = None
     collection_id: uuid.UUID | None = None
     is_published: bool | None = None
 
@@ -61,7 +64,9 @@ class LookPublic(BaseModel):
     title: str
     description: str | None
     image_url: str
-    price: Decimal | None
+    category: str | None
+    occasions: list[str]
+    tags: list[str]
     collection_id: uuid.UUID | None
     is_published: bool
     created_at: datetime

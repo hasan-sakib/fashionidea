@@ -78,3 +78,25 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+/* --- Public site motion background: slowly drifting blurred gradient blobs --- */
+@keyframes fi-drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(6vw, 4vh) scale(1.1); }
+  66% { transform: translate(-4vw, 6vh) scale(0.95); }
+}
+@keyframes fi-drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-7vw, -5vh) scale(1.15); }
+}
+@keyframes fi-drift-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(5vw, -6vh) scale(1.08); }
+}
+.fi-blob { position: absolute; border-radius: 9999px; filter: blur(70px); opacity: 0.55; will-change: transform; }
+.fi-blob-a { animation: fi-drift-a 26s ease-in-out infinite; }
+.fi-blob-b { animation: fi-drift-b 32s ease-in-out infinite; }
+.fi-blob-c { animation: fi-drift-c 38s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .fi-blob-a, .fi-blob-b, .fi-blob-c { animation: none; }
+}

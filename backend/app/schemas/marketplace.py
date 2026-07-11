@@ -1,8 +1,7 @@
-"""Public marketplace DTOs (published looks across all tenants)."""
+"""Public discovery DTOs (published designs across all designers)."""
 
 import uuid
 from datetime import datetime
-from decimal import Decimal
 
 from pydantic import BaseModel
 
@@ -13,10 +12,14 @@ class DesignerRef(BaseModel):
 
 
 class MarketplaceLook(BaseModel):
+    """A published design in the public feed, with its designer and categorization."""
+
     id: uuid.UUID
     title: str
     description: str | None
     image_url: str
-    price: Decimal | None
+    category: str | None
+    occasions: list[str]
+    tags: list[str]
     created_at: datetime
     designer: DesignerRef

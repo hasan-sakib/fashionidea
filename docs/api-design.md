@@ -1,62 +1,91 @@
 # Fashion Idea — API Design
 
-> **Status:** Phase 1 defines conventions. Only `GET /api/v1/utils/health-check/` exists so far;
-> the rest are the contract that later phases implement.
+> **Status:** Phases 1–7 implemented. This document reflects the current API.
 
 ## 1. Conventions
 
 - **Base path:** all endpoints live under `/api/v1`. Version bumps to `/api/v2` when breaking.
 - **Transport:** JSON over HTTP. `Content-Type: application/json` for request/response bodies.
-- **Resource naming:** plural nouns (`/collections`, `/looks`, `/inquiries`). IDs are UUIDs.
+- **Resource naming:** plural nouns (`/collections`, `/looks`, `/inquiries`, `/designers`,
+  `/moodboards`). IDs are UUIDs.
 - **Trailing slash:** collection routes end with `/` (FastAPI default), matching the health-check.
 - **Routing through Traefik:** the API is reachable via `api.localhost` **and** via `PathPrefix(/api)`
-  on any storefront host, so `designer1.localhost/api/v1/...` also hits the backend.
+  on any host, so `alice.localhost/api/v1/...` also hits the backend (used by the portfolio site).
 
 ## 2. Tenant resolution contract
 
-Tenant-scoped endpoints resolve the tenant via the `get_current_tenant` dependency (Phase 2):
+Tenant-scoped endpoints resolve the tenant via the `get_current_tenant` dependency:
 
 1. **Subdomain (primary)** — left-most `Host` label is the tenant `slug`
-   (`designer1.localhost` → `designer1`). Reserved: `api`, `www`, `traefik`, `app`, apex.
+   (`alice.localhost` → `alice`). Reserved: `api`, `www`, `traefik`, `app`, apex.
 2. **`X-Tenant-ID` header (fallback)** — explicit slug or UUID; used by dev tooling and Playwright.
 3. Unresolved/inactive → **400** `{"detail": "tenant_required"}`.
 
-Endpoints that are **not** tenant-scoped: auth (`/auth/*`), the global marketplace feed
-(`/marketplace/*`), consumer profile/moodboards, and `/utils/*`.
+**Not** tenant-scoped (read across all active tenants): auth (`/auth/*`), the public discovery
+surfaces (`/discover/*`, `/designers/*`, `/lookbooks/*`, `/search/*`, `/vocab`), consumer
+moodboards, and `/utils/*`.
 
-`tenant_id` is **never** accepted from the client body — it is always taken from the resolved tenant.
+Designer **dashboard** writes (`/collections`, `/looks`, `/inquiries` management) use
+`get_designer_tenant` instead — the tenant comes from the **authenticated user's JWT**, not the
+host, so a designer can never write to another tenant. `tenant_id` is never accepted from the
+client body.
 
-## 3. Authentication (Phase 2)
+## 3. Authentication
 
 - **Scheme:** OAuth2 password flow issuing JWT access tokens.
 - **Header:** `Authorization: Bearer <token>`.
 - **Token claims:** `sub` (user id), `role`, `tenant_id` (null for consumers/admins), `exp`.
 - **Endpoints:**
-  - `POST /api/v1/auth/register/designer` — creates a Tenant + designer User atomically.
-  - `POST /api/v1/auth/register/consumer` — creates a tenant-less consumer User.
-  - `POST /api/v1/auth/login` — OAuth2 form (`username`=email, `password`) → `{access_token, token_type}`.
-  - `GET  /api/v1/auth/me` — current principal from the bearer token.
+  - `POST /auth/register/designer` — creates a Tenant + designer User atomically.
+  - `POST /auth/register/consumer` — creates a tenant-less consumer User.
+  - `POST /auth/login` — OAuth2 form (`username`=email, `password`) → `{access_token, token_type}`.
+  - `GET  /auth/me` — current principal from the bearer token (includes `measurements`).
+  - `PATCH /auth/me` — update `full_name` / `password` / `measurements` (the consumer measurement profile).
 
-## 4. Planned resource endpoints (later phases)
+## 4. Resource endpoints
 
-| Method & path | Phase | Scope | Notes |
-|---|---|---|---|
-| `GET /api/v1/utils/health-check/` | 1 | none | `{"status":"ok"}` — liveness probe |
-| `GET/POST /api/v1/collections/` | 3 | tenant | list/create designer collections |
-| `GET/PATCH/DELETE /api/v1/collections/{id}` | 3 | tenant | manage one collection |
-| `GET/POST /api/v1/looks/` | 3 | tenant | list/create looks |
-| `GET/PATCH/DELETE /api/v1/looks/{id}` | 3 | tenant | manage one look |
-| `GET /api/v1/inquiries/` | 3 | tenant | designer inbox (filter by `status`) |
-| `PATCH /api/v1/inquiries/{id}` | 3 | tenant | update inquiry status |
-| `GET /api/v1/storefront/` | 4 | tenant | public published collections+looks for a subdomain |
-| `POST /api/v1/inquiries/` | 4 | tenant | public inquiry submission |
-| `GET /api/v1/marketplace/looks/` | 5 | global | published looks across all tenants |
-| `GET/POST /api/v1/moodboards/` | 5 | consumer | consumer saved-look boards |
+### Designer dashboard (auth: designer/admin, tenant from JWT)
+
+| Method & path | Notes |
+|---|---|
+| `GET/POST /collections/` | list/create collections |
+| `GET/PATCH/DELETE /collections/{id}` | manage one collection |
+| `GET/POST /looks/` | list/create designs. Body: `title, description, image_url, category, occasions[], tags[], collection_id, is_published` — **no price** |
+| `GET/PATCH/DELETE /looks/{id}` | manage one design |
+| `POST /looks/upload-image` | multipart upload → `{url}` under `/media/{tenant_id}/...` |
+| `GET /inquiries/` | designer inbox (filter by `?status=`) |
+| `PATCH /inquiries/{id}` | update status (`new`/`read`/`archived`) |
+
+### Designer portfolio (public, tenant from host)
+
+| Method & path | Notes |
+|---|---|
+| `GET /storefront/` | `{tenant, collections[], looks[]}` — published only |
+| `POST /inquiries/` | public "get in touch" submission, routed to the resolved tenant |
+
+### Public discovery site (public, cross-tenant)
+
+| Method & path | Notes |
+|---|---|
+| `GET /discover/looks/?occasion=&category=&q=&skip=&limit=` | published designs across all active designers, filterable |
+| `GET /discover/looks/{id}` | one published design + its designer (404 if unpublished/missing) |
+| `GET /designers/?q=&skip=&limit=` | active designers with ≥1 published design: `{slug, name, look_count, cover_image}` |
+| `GET /lookbooks/?skip=&limit=` | published collections (with published designs) across designers, with `preview_images[]` |
+| `GET /search/?q=&limit=` | `{designers[], looks[], occasions[], categories[]}` — powers the navbar search dropdown |
+| `GET /vocab` | `{occasions[], categories[]}` — the shared categorization vocabulary |
+
+### Consumer (auth: any authenticated user)
+
+| Method & path | Notes |
+|---|---|
+| `GET/POST /moodboards/` | list/create the user's boards |
+| `GET/PATCH/DELETE /moodboards/{id}` | one board + its saved designs |
+| `POST /moodboards/{id}/items` | save a design (idempotent); `{look_id}` |
+| `DELETE /moodboards/{id}/items/{look_id}` | remove a saved design |
 
 ## 5. Pagination
 
-List endpoints accept `?skip=<int>&limit=<int>` (default `skip=0`, `limit=100`, max `limit=200`)
-and return:
+List endpoints accept `?skip=<int>&limit=<int>` and return:
 
 ```json
 { "data": [ /* items */ ], "count": 42 }
@@ -72,8 +101,10 @@ FastAPI's default error envelope is used consistently:
 { "detail": "human_or_machine_readable_message" }
 ```
 
-- `400` — bad request / unresolved tenant (`tenant_required`).
+- `400` — bad request / unresolved tenant (`tenant_required`) / cross-tenant reference (e.g.
+  `collection_not_found` when a design references another tenant's collection).
 - `401` — missing/invalid token.
-- `403` — authenticated but not permitted (e.g. wrong role or cross-tenant access).
-- `404` — resource not found *within the resolved tenant* (cross-tenant rows read as 404, never leaked).
+- `403` — authenticated but not permitted (e.g. wrong role, or a non-designer hitting dashboard routes).
+- `404` — resource not found *within the resolved scope* (cross-tenant rows, or unpublished designs
+  on public routes, read as 404 — never leaked).
 - `422` — Pydantic validation error (FastAPI standard, includes field locations).

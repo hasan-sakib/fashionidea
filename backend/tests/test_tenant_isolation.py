@@ -109,18 +109,20 @@ def test_storefront_shows_only_own_published_items(client):
     assert client.get(f"{V1}/storefront/", headers={"X-Tenant-ID": "ghost"}).status_code == 400
 
 
-def test_marketplace_aggregates_published_across_tenants_only(client):
+def test_discover_aggregates_published_across_tenants_only(client):
     a = register_designer(client, "alice")
     b = register_designer(client, "bob")
     create_look(client, a, title="A-pub", published=True)
     create_look(client, a, title="A-draft", published=False)
     create_look(client, b, title="B-pub", published=True)
 
-    data = client.get(f"{V1}/marketplace/looks/").json()
+    data = client.get(f"{V1}/discover/looks/").json()
     titles = {look["title"] for look in data["data"]}
     assert titles == {"A-pub", "B-pub"}  # drafts excluded, both tenants included
     slugs = {look["designer"]["slug"] for look in data["data"]}
     assert slugs == {"alice", "bob"}
+    # No commerce framing — designs are shown without a price.
+    assert all("price" not in look for look in data["data"])
 
 
 def test_moodboards_are_isolated_between_consumers(client):

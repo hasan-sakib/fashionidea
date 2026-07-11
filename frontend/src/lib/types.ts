@@ -10,6 +10,7 @@ export interface User {
   role: UserRole
   tenant_id: string | null
   is_active: boolean
+  measurements: Record<string, unknown> | null
 }
 
 export interface Collection {
@@ -27,7 +28,9 @@ export interface Look {
   title: string
   description: string | null
   image_url: string
-  price: string | null
+  category: string | null
+  occasions: string[]
+  tags: string[]
   collection_id: string | null
   is_published: boolean
   created_at: string
@@ -54,14 +57,39 @@ export interface DesignerRef {
   name: string
 }
 
-export interface MarketplaceLook {
+/** A published design in the public feed (no price — this is a showcase). */
+export interface DiscoverLook {
   id: string
   title: string
   description: string | null
   image_url: string
-  price: string | null
+  category: string | null
+  occasions: string[]
+  tags: string[]
   created_at: string
   designer: DesignerRef
+}
+
+export interface DesignerCard {
+  slug: string
+  name: string
+  look_count: number
+  cover_image: string | null
+}
+
+export interface Lookbook {
+  id: string
+  title: string
+  season: string | null
+  designer: DesignerRef
+  preview_images: string[]
+}
+
+export interface SearchResults {
+  designers: DesignerCard[]
+  looks: DiscoverLook[]
+  occasions: string[]
+  categories: string[]
 }
 
 export interface Moodboard {
@@ -77,5 +105,5 @@ export interface MoodboardDetail {
   name: string
   created_at: string
   updated_at: string
-  looks: MarketplaceLook[]
+  looks: DiscoverLook[]
 }

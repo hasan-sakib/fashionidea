@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 
-/** Shopper (consumer) auth as a modal. Designers sign in at /studio. */
+/** Consumer auth as a modal. Designers sign in at /studio. */
 export function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { login, registerConsumer } = useAuth()
   const [mode, setMode] = useState<"login" | "register">("login")
@@ -71,7 +71,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
       </p>
       <p className="mt-2 text-center text-xs text-[var(--muted-foreground)]">
         Are you a designer?{" "}
-        <a href="/studio" className="underline underline-offset-4">Sell on Fashion Idea</a>
+        <a href="/studio" className="underline underline-offset-4">Showcase your talent</a>
       </p>
     </Dialog>
   )

@@ -57,7 +57,7 @@ test("visitor submits an inquiry on a designer's subdomain and it reaches that d
   await api.dispose()
 })
 
-test("an inactive/unknown storefront shows a not-found state", async ({ page }) => {
+test("an inactive/unknown portfolio shows a not-found state", async ({ page }) => {
   await page.goto("http://nosuch.localhost/")
-  await expect(page.getByRole("heading", { name: "Storefront not found" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Portfolio not found" })).toBeVisible()
 })

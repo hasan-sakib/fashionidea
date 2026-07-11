@@ -153,7 +153,7 @@ export function CollectionsPanel({ onChanged }: { onChanged?: () => void }) {
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
-            Published (visible on your storefront)
+            Published (visible on your portfolio)
           </label>
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex justify-end gap-2">

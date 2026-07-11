@@ -9,12 +9,15 @@ import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { api, ApiError } from "@/lib/api"
 import type { Collection, Look, Page } from "@/lib/types"
+import { CATEGORIES, OCCASIONS } from "@/lib/vocab"
 
 interface FormState {
   title: string
   description: string
   image_url: string
-  price: string
+  category: string
+  occasions: string[]
+  tags: string
   collection_id: string
   is_published: boolean
 }
@@ -23,12 +26,14 @@ const empty: FormState = {
   title: "",
   description: "",
   image_url: "",
-  price: "",
+  category: "",
+  occasions: [],
+  tags: "",
   collection_id: "",
   is_published: false,
 }
 
-export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
+export function LooksPanel() {
   const [looks, setLooks] = useState<Look[]>([])
   const [collections, setCollections] = useState<Collection[]>([])
   const [filter, setFilter] = useState("")
@@ -57,8 +62,7 @@ export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
     load()
   }, [load])
 
-  const collectionName = (id: string | null) =>
-    collections.find((c) => c.id === id)?.title ?? null
+  const collectionName = (id: string | null) => collections.find((c) => c.id === id)?.title ?? null
 
   function openCreate() {
     setEditing(null)
@@ -73,12 +77,23 @@ export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
       title: l.title,
       description: l.description ?? "",
       image_url: l.image_url,
-      price: l.price ?? "",
+      category: l.category ?? "",
+      occasions: l.occasions ?? [],
+      tags: (l.tags ?? []).join(", "),
       collection_id: l.collection_id ?? "",
       is_published: l.is_published,
     })
     setError(null)
     setDialogOpen(true)
+  }
+
+  function toggleOccasion(name: string) {
+    setForm((f) => ({
+      ...f,
+      occasions: f.occasions.includes(name)
+        ? f.occasions.filter((o) => o !== name)
+        : [...f.occasions, name],
+    }))
   }
 
   async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -109,7 +124,9 @@ export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
       title: form.title,
       description: form.description || null,
       image_url: form.image_url,
-      price: form.price ? form.price : null,
+      category: form.category || null,
+      occasions: form.occasions,
+      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
       collection_id: form.collection_id || null,
       is_published: form.is_published,
     }
@@ -118,7 +135,6 @@ export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
       else await api.post("/looks/", payload)
       setDialogOpen(false)
       await load()
-      onChanged?.()
     } catch (err) {
       setError(err instanceof ApiError ? err.detail : "Failed to save")
     } finally {
@@ -127,18 +143,17 @@ export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
   }
 
   async function remove(l: Look) {
-    if (!confirm(`Delete look "${l.title}"?`)) return
+    if (!confirm(`Delete design "${l.title}"?`)) return
     await api.del(`/looks/${l.id}`)
     await load()
-    onChanged?.()
   }
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Looks</h2>
-          <p className="text-sm text-[var(--muted-foreground)]">Your catalog items with imagery.</p>
+          <h2 className="text-lg font-semibold tracking-tight">Designs</h2>
+          <p className="text-sm text-[var(--muted-foreground)]">Showcase your work — categorize each design by occasion & type.</p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={filter} onChange={(e) => setFilter(e.target.value)} className="w-48">
@@ -147,7 +162,7 @@ export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
               <option key={c.id} value={c.id}>{c.title}</option>
             ))}
           </Select>
-          <Button onClick={openCreate}>New look</Button>
+          <Button onClick={openCreate}>New design</Button>
         </div>
       </div>
 
@@ -155,28 +170,30 @@ export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
         <p className="text-sm text-[var(--muted-foreground)]">Loading…</p>
       ) : looks.length === 0 ? (
         <div className="rounded-lg border border-dashed border-[var(--border)] p-10 text-center">
-          <p className="text-sm text-[var(--muted-foreground)]">No looks yet.</p>
-          <Button className="mt-3" onClick={openCreate}>Add your first look</Button>
+          <p className="text-sm text-[var(--muted-foreground)]">No designs yet.</p>
+          <Button className="mt-3" onClick={openCreate}>Add your first design</Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {looks.map((l) => (
             <div key={l.id} className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card)]">
               <div className="aspect-[3/4] w-full bg-[var(--muted)]">
-                {/* image_url is same-origin (/api/v1/media/...) or an external URL */}
                 <img src={l.image_url} alt={l.title} className="h-full w-full object-cover" loading="lazy" />
               </div>
               <div className="p-3">
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-medium leading-tight">{l.title}</p>
-                  <Badge variant={l.is_published ? "success" : "muted"}>
-                    {l.is_published ? "Live" : "Draft"}
-                  </Badge>
+                  <Badge variant={l.is_published ? "success" : "muted"}>{l.is_published ? "Live" : "Draft"}</Badge>
                 </div>
-                <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-                  {collectionName(l.collection_id) ?? "No collection"}
-                  {l.price ? ` · $${l.price}` : ""}
-                </p>
+                <p className="mt-1 text-sm text-[var(--muted-foreground)]">{collectionName(l.collection_id) ?? "No collection"}</p>
+                {(l.category || l.occasions?.length > 0) && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {l.category && <Badge variant="muted">{l.category}</Badge>}
+                    {(l.occasions ?? []).slice(0, 2).map((o) => (
+                      <Badge key={o} variant="outline">{o}</Badge>
+                    ))}
+                  </div>
+                )}
                 <div className="mt-2 flex gap-1">
                   <Button variant="outline" size="sm" onClick={() => openEdit(l)}>Edit</Button>
                   <Button variant="ghost" size="sm" onClick={() => remove(l)}>Delete</Button>
@@ -187,7 +204,7 @@ export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
         </div>
       )}
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} title={editing ? "Edit look" : "New look"}>
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} title={editing ? "Edit design" : "New design"}>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
             <Label>Image</Label>
@@ -200,11 +217,7 @@ export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
                 {uploading && <p className="text-xs text-[var(--muted-foreground)]">Uploading…</p>}
               </div>
             </div>
-            <Input
-              value={form.image_url}
-              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-              placeholder="…or paste an image URL"
-            />
+            <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="…or paste an image URL" />
           </div>
           <div className="space-y-1.5">
             <Label>Title</Label>
@@ -212,8 +225,13 @@ export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Price</Label>
-              <Input type="number" step="0.01" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0.00" />
+              <Label>Dress type</Label>
+              <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                <option value="">Uncategorized</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Collection</Label>
@@ -226,12 +244,36 @@ export function LooksPanel({ onChanged }: { onChanged?: () => void }) {
             </div>
           </div>
           <div className="space-y-1.5">
+            <Label>Occasions</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {OCCASIONS.map((o) => (
+                <button
+                  key={o.name}
+                  type="button"
+                  onClick={() => toggleOccasion(o.name)}
+                  className={
+                    "rounded-full border px-3 py-1 text-xs font-medium " +
+                    (form.occasions.includes(o.name)
+                      ? "border-transparent bg-[var(--primary)] text-[var(--primary-foreground)]"
+                      : "border-[var(--border)] text-[var(--muted-foreground)]")
+                  }
+                >
+                  {o.emoji} {o.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Style tags</Label>
+            <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="silk, evening, minimalist (comma-separated)" />
+          </div>
+          <div className="space-y-1.5">
             <Label>Description</Label>
             <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
-            Published (visible on your storefront)
+            Published (visible on your portfolio & the public site)
           </label>
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex justify-end gap-2">

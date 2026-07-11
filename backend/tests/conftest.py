@@ -40,6 +40,9 @@ def engine():
     admin.dispose()
 
     eng = create_engine(_TEST_URI)
+    # Drop + recreate so schema changes (new columns, etc.) always take effect —
+    # create_all alone won't add columns to a table that already exists.
+    SQLModel.metadata.drop_all(eng)
     SQLModel.metadata.create_all(eng)
     yield eng
     eng.dispose()

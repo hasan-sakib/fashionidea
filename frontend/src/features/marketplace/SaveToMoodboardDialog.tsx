@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button"
 import { Dialog } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { api, ApiError } from "@/lib/api"
-import type { MarketplaceLook, Moodboard } from "@/lib/types"
+import type { DiscoverLook, Moodboard } from "@/lib/types"
 
 interface Props {
-  look: MarketplaceLook | null
+  look: DiscoverLook | null
   onClose: () => void
 }
 

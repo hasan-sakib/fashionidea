@@ -1,8 +1,9 @@
 """User: an auth principal — a designer (belongs to a tenant), consumer, or admin."""
 
 import uuid
+from typing import Any
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import JSON, Column, UniqueConstraint
 from sqlmodel import Field
 
 from app.models.base import TimestampBase, UUIDBase
@@ -24,3 +25,8 @@ class User(UUIDBase, TimestampBase, table=True):
     role: UserRole = Field(default=UserRole.consumer, index=True)
     full_name: str | None = Field(default=None, max_length=255)
     is_active: bool = Field(default=True)
+
+    # Optional consumer "measurement profile" (height, bust, waist, hips, etc.).
+    measurements: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSON, nullable=True)
+    )

@@ -5,6 +5,7 @@ never leaks columns like ``hashed_password``.
 """
 
 import uuid
+from typing import Any
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -37,6 +38,8 @@ class ConsumerRegister(BaseModel):
 class ProfileUpdate(BaseModel):
     full_name: str | None = Field(default=None, max_length=255)
     password: str | None = Field(default=None, min_length=8, max_length=128)
+    # Consumer "measurement profile" (free-form: height, bust, waist, hips, …).
+    measurements: dict[str, Any] | None = None
 
 
 class TenantPublic(BaseModel):
@@ -55,5 +58,6 @@ class UserPublic(BaseModel):
     role: UserRole
     tenant_id: uuid.UUID | None
     is_active: bool
+    measurements: dict[str, Any] | None = None
 
     model_config = {"from_attributes": True}

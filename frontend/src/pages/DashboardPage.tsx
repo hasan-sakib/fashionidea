@@ -11,8 +11,8 @@ type Tab = "collections" | "looks" | "inquiries"
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "collections", label: "Collections" },
-  { key: "looks", label: "Looks" },
-  { key: "inquiries", label: "Inquiries" },
+  { key: "looks", label: "Designs" },
+  { key: "inquiries", label: "Messages" },
 ]
 
 export function DashboardPage() {

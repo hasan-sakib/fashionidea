@@ -12,7 +12,7 @@ const STATUS_VARIANT: Record<InquiryStatus, "warning" | "muted" | "success"> = {
   archived: "success",
 }
 
-export function InquiriesPanel({ onChanged }: { onChanged?: () => void }) {
+export function InquiriesPanel() {
   const [items, setItems] = useState<Inquiry[]>([])
   const [status, setStatus] = useState("")
   const [loading, setLoading] = useState(true)
@@ -32,15 +32,14 @@ export function InquiriesPanel({ onChanged }: { onChanged?: () => void }) {
   async function setInquiryStatus(inq: Inquiry, next: InquiryStatus) {
     await api.patch(`/inquiries/${inq.id}`, { status: next })
     await load()
-    onChanged?.()
   }
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Inquiries</h2>
-          <p className="text-sm text-[var(--muted-foreground)]">Messages from visitors to your storefront.</p>
+          <h2 className="text-lg font-semibold tracking-tight">Messages</h2>
+          <p className="text-sm text-[var(--muted-foreground)]">People who reached out from your portfolio.</p>
         </div>
         <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-44">
           <option value="">All statuses</option>
@@ -54,7 +53,7 @@ export function InquiriesPanel({ onChanged }: { onChanged?: () => void }) {
         <p className="text-sm text-[var(--muted-foreground)]">Loading…</p>
       ) : items.length === 0 ? (
         <div className="rounded-lg border border-dashed border-[var(--border)] p-10 text-center">
-          <p className="text-sm text-[var(--muted-foreground)]">No inquiries yet.</p>
+          <p className="text-sm text-[var(--muted-foreground)]">No messages yet.</p>
         </div>
       ) : (
         <div className="space-y-3">

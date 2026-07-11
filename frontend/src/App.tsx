@@ -21,11 +21,11 @@ function StudioGate() {
 }
 
 export default function App() {
-  // 1) Tenant subdomain (alice.localhost) → that designer's public storefront.
+  // 1) Tenant subdomain (alice.localhost) → that designer's own portfolio site.
   if (getSubdomainSlug()) {
     return <Storefront />
   }
-  // 2) Apex /studio → designer app; everything else → consumer marketplace.
+  // 2) Apex /studio → designer dashboard; everything else → the public discovery site.
   const isStudio = window.location.pathname.startsWith("/studio")
   return (
     <AuthProvider>{isStudio ? <StudioGate /> : <ConsumerApp />}</AuthProvider>

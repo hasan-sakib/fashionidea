@@ -106,11 +106,13 @@ def read_me(current_user: CurrentUser) -> UserPublic:
 
 @router.patch("/me", response_model=UserPublic)
 def update_me(body: ProfileUpdate, current_user: CurrentUser, session: SessionDep) -> UserPublic:
-    """Update the authenticated user's profile (name and/or password)."""
+    """Update the authenticated user's profile (name, password, measurements)."""
     if body.full_name is not None:
         current_user.full_name = body.full_name
     if body.password is not None:
         current_user.hashed_password = hash_password(body.password)
+    if body.measurements is not None:
+        current_user.measurements = body.measurements
     session.add(current_user)
     session.commit()
     session.refresh(current_user)
